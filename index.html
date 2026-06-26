@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom AI Chat with Tools Menu</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* মূল চ্যাট কন্টেইনার */
+        .chat-card {
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 450px;
+            height: 85vh;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border: 1px solid #eef0f2;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative; /* মেনুর পজিশন ঠিক রাখার জন্য */
+        }
+
+        .top-nav {
+            display: flex;
+            gap: 10px;
+            padding-bottom: 10px;
+        }
+
+        .nav-btn {
+            border: 1px solid #e2e8f0;
+            background: none;
+            cursor: pointer;
+            color: #718096;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-pill { width: 24px; height: 40px; border-radius: 12px; }
+        .btn-square { width: 40px; height: 40px; border-radius: 12px; font-size: 18px; }
+
+        /* চ্যাট স্ক্রিন এরিয়া */
+        .chat-screen {
+            flex: 1;
+            overflow-y: auto;
+            margin: 15px 0;
+            padding-right: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chat-screen::-webkit-scrollbar { width: 4px; }
+        .chat-screen::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+
+        .welcome-content {
+            text-align: center;
+            margin-top: 30px;
+            padding: 0 10px;
+        }
+
+        .welcome-content h1 { font-size: 30px; color: #0f172a; font-weight: 700; margin-bottom: 12px; }
+        .welcome-content p { font-size: 14px; color: #64748b; line-height: 1.6; }
+
+        /* মেসেজ বাবল ও টাইম */
+        .message-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+        }
+
+        .user-wrapper { align-self: flex-end; align-items: flex-end; }
+        .ai-wrapper { align-self: flex-start; align-items: flex-start; }
+
+        .message-bubble {
+            padding: 12px 16px;
+            font-size: 15px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            background-color: #00a372;
+            color: white;
+            border-radius: 18px 18px 4px 18px;
+            animation: userFade 0.3s ease-out;
+        }
+
+        .ai-message {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            border-radius: 4px 18px 18px 18px;
+            animation: aiFadeIn 0.4s ease-out;
+        }
+
+        @keyframes userFade {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes aiFadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .chat-time { font-size: 11px; color: #94a3b8; margin-top: 4px; padding: 0 4px; }
+
+        /* এসভিজি ড্রয়িং অ্যানিমেশন লোডার */
+        .drawing-loader {
+            align-self: flex-start;
+            margin-left: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .drawing-loader svg { width: 60px; height: 60px; }
+
+        .svg-bubble-path { stroke-dasharray: 200; stroke-dashoffset: 200; animation: drawLine 2s ease-in-out infinite; }
+        .svg-circle-path { stroke-dasharray: 50; stroke-dashoffset: 50; animation: drawLine 2s ease-in-out infinite; animation-delay: 0.3s; }
+        .svg-text-line { stroke-dasharray: 40; stroke-dashoffset: 40; animation: drawLine 2s ease-in-out infinite; }
+        .line-1 { animation-delay: 0.5s; }
+        .line-2 { animation-delay: 0.7s; }
+        .line-3 { animation-delay: 0.9s; }
+
+        @keyframes drawLine {
+            0% { stroke-dashoffset: 200; }
+            45% { stroke-dashoffset: 0; }
+            75% { stroke-dashoffset: 0; opacity: 1; }
+            90%, 100% { stroke-dashoffset: 0; opacity: 0; }
+        }
+
+        /* ইনপুট বক্স এরিয়া */
+        .input-container {
+            border: 2px solid #00a372;
+            border-radius: 24px;
+            padding: 14px 16px;
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+        }
+
+        .input-container textarea {
+            width: 100%;
+            border: none;
+            outline: none;
+            resize: none;
+            font-size: 16px;
+            color: #334155;
+            height: 50px;
+        }
+
+        .input-container textarea::placeholder { color: #94a3b8; }
+
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 10px;
+        }
+
+        .tools-left { display: flex; align-items: center; gap: 12px; color: #94a3b8; font-size: 14px; }
+        .tools-left i { cursor: pointer; font-size: 18px; }
+        .divider { width: 1px; height: 16px; background-color: #e2e8f0; }
+        
+        /* টুলস বাটন স্টাইল */
+        .tools-text { 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+            cursor: pointer; 
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .tools-text:hover {
+            background-color: #f1f5f9;
+            color: #00a372;
+        }
+
+        /* --- নতুন কাস্টম টুলস ড্রপডাউন মেনু --- */
+        .tools-menu {
+            position: absolute;
+            bottom: 65px; /* ইনপুটের অ্যাকশন বারের ঠিক ওপরে দেখাবে */
+            left: 16px;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            width: 180px;
+            display: none; /* প্রথমে লুকানো থাকবে */
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 10;
+            animation: menuPopup 0.2s ease-out;
+        }
+
+        .tools-menu.active {
+            display: flex; /* একটিভ হলে মেনু শো করবে */
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            font-size: 14px;
+            color: #475569;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .menu-item:hover {
+            background-color: #f8fafc;
+            color: #00a372;
+        }
+
+        .menu-item i {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        @keyframes menuPopup {
+            from { opacity: 0; transform: translateY(10px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .send-btn {
+            background-color: #00a372;
+            color: white;
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 163, 114, 0.2);
+            transition: transform 0.1s;
+        }
+
+        .send-btn:active { transform: scale(0.95); }
+    </style>
+</head>
+<body>
+
+    <div class="chat-card">
+        <div class="top-nav">
+            <button class="nav-btn btn-pill"></button>
+            <button class="nav-btn btn-square">+</button>
+        </div>
+
+        <div class="chat-screen" id="chatScreen">
+            <div class="welcome-content" id="welcomeContent">
+                <h1>How can I help?</h1>
+                <p>From brainstorming to building ideas, creating images, and solving problems, Quillbot's AI Chat does it all.</p>
+            </div>
+        </div>
+
+        <div class="input-container">
+            
+            <div class="tools-menu" id="toolsMenu">
+                <div class="menu-item" onclick="selectTool('Image Creator')">
+                    <i class="fa-solid fa-image"></i>
+                    <span>Image Creator</span>
+                </div>
+                <div class="menu-item" onclick="selectTool('Code Helper')">
+                    <i class="fa-solid fa-code"></i>
+                    <span>Code Helper</span>
+                </div>
+                <div class="menu-item" onclick="selectTool('Summarizer')">
+                    <i class="fa-solid fa-file-lines"></i>
+                    <span>Summarizer</span>
+                </div>
+            </div>
+
+            <textarea id="chatInput" placeholder="Ask me anything..." rows="2"></textarea>
+            
+            <div class="action-bar">
+                <div class="tools-left">
+                    <i class="fa-solid fa-paperclip" onclick="alert('File attachment clicked!')"></i>
+                    <div class="divider"></div>
+                    
+                    <div class="tools-text" id="toolsBtn">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Tools</span>
+                    </div>
+                </div>
+                <button class="send-btn" id="sendBtn">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const chatScreen = document.getElementById('chatScreen');
+        const welcomeContent = document.getElementById('welcomeContent');
+        const toolsBtn = document.getElementById('toolsBtn');
+        const toolsMenu = document.getElementById('toolsMenu');
+
+        function getCurrentTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            return `${hours}:${minutes} ${ampm}`;
+        }
+
+        // --- টুলস মেনু ওপেন/ক্লোজ করার ফাংশন ---
+        toolsBtn.addEventListener('click', function(event) {
+            event.stopPropagation(); // ক্লিক যেন বডিতে ছড়িয়ে না পড়ে
+            toolsMenu.classList.toggle('active');
+        });
+
+        // মেনুর বাইরে কোথাও ক্লিক করলে মেনু বন্ধ হয়ে যাবে
+        document.addEventListener('click', function() {
+            toolsMenu.classList.remove('active');
+        });
+
+        // মেনু থেকে কোনো টুল সিলেক্ট করলে কি হবে
+        function selectTool(toolName) {
+            chatInput.value = `[Using ${toolName}]: `;
+            chatInput.focus();
+            toolsMenu.classList.remove('active');
+        }
+
+        function sendMessage() {
+            const messageText = chatInput.value.trim();
+            if (messageText !== "") {
+                if (welcomeContent) welcomeContent.style.display = 'none';
+
+                const userWrapper = document.createElement('div');
+                userWrapper.classList.add('message-wrapper', 'user-wrapper');
+                userWrapper.innerHTML = `
+                    <div class="message-bubble user-message">${messageText}</div>
+                    <div class="chat-time">${getCurrentTime()}</div>
+                `;
+                chatScreen.appendChild(userWrapper);
+                
+                chatInput.value = ""; 
+                chatScreen.scrollTop = chatScreen.scrollHeight;
+
+                showDrawingLoader();
+            }
+        }
+
+        function showDrawingLoader() {
+            const loaderDiv = document.createElement('div');
+            loaderDiv.classList.add('drawing-loader');
+            loaderDiv.id = 'drawingLoader';
+            
+            loaderDiv.innerHTML = `
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path class="svg-bubble-path" d="M44 16C52.8366 16 60 22.7157 60 31C60 39.2843 52.8366 46 44 46C41.5 46 38.5 47.5 35 50C34 50.7 32.5 49.5 33 48.5C34.5 45.5 35 43.5 35 42C26.1634 42 19 35.2843 19 27C19 18.7157 26.1634 16 35 16H44Z" stroke="#00a372" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle class="svg-circle-path" cx="48" cy="16" r="5" stroke="#00a372" stroke-width="2.5"/>
+                    <line class="svg-text-line line-1" x1="28" y1="26" x2="48" y2="26" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+                    <line class="svg-text-line line-2" x1="28" y1="32" x2="44" y2="32" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+                    <line class="svg-text-line line-3" x1="28" y1="38" x2="38" y2="38" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+            `;
+            chatScreen.appendChild(loaderDiv);
+            chatScreen.scrollTop = chatScreen.scrollHeight;
+
+            setTimeout(() => {
+                const loader = document.getElementById('drawingLoader');
+                if (loader) loader.remove();
+
+                const aiWrapper = document.createElement('div');
+                aiWrapper.classList.add('message-wrapper', 'ai-wrapper');
+                aiWrapper.innerHTML = `
+                    <div class="message-bubble ai-message">নিশ্চয়ই! আমি কাস্টম টুলস ফিচার এবং ড্রয়িং অ্যানিমেশন দিয়ে আপনার কাজ করার জন্য প্রস্তুত।</div>
+                    <div class="chat-time">${getCurrentTime()}</div>
+                `;
+                chatScreen.appendChild(aiWrapper);
+                chatScreen.scrollTop = chatScreen.scrollHeight;
+
+            }, 2500);
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault(); 
+                sendMessage();
+            }
+        });
+    </script>
+
+</body>
+</html>
