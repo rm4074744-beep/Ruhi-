@@ -45,16 +45,16 @@ exports.handler = async (event) => {
     };
 
   } catch (err) {
-  console.error(err);
+    console.error(err);
 
-  return {
-    statusCode: 500,
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      error: err.message,
-      stack: err.stack
-    })
-  };
-  };
+    return {
+      statusCode: 500,
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        error: err.message
+      })
+    };
+  }
+};
