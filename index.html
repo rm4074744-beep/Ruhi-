@@ -425,24 +425,25 @@
         chatScreen.appendChild(aiWrapper);
         chatScreen.scrollTop = chatScreen.scrollHeight;
 
-    } catch (error) {
-        const loader = document.getElementById("drawingLoader");
-        if (loader) loader.remove();
+        catch (error) {
+    console.error(error);
+    alert(error.message);
 
-        const aiWrapper = document.createElement("div");
-        aiWrapper.classList.add("message-wrapper", "ai-wrapper");
+    const loader = document.getElementById("drawingLoader");
+    if (loader) loader.remove();
 
-        aiWrapper.innerHTML = `
-            <div class="message-bubble ai-message">
-                ❌ AI সার্ভারের সাথে সংযোগ করা যায়নি।
-            </div>
-            <div class="chat-time">${getCurrentTime()}</div>
-        `;
+    const aiWrapper = document.createElement("div");
+    aiWrapper.classList.add("message-wrapper", "ai-wrapper");
 
-        chatScreen.appendChild(aiWrapper);
+    aiWrapper.innerHTML = `
+        <div class="message-bubble ai-message">
+            ❌ ${error.message}
+        </div>
+        <div class="chat-time">${getCurrentTime()}</div>
+    `;
+
+    chatScreen.appendChild(aiWrapper);
     }
-}, 1000);
-        }
 
         sendBtn.addEventListener('click', sendMessage);
         chatInput.addEventListener('keydown', function(event) {
