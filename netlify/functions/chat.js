@@ -44,12 +44,17 @@ export async function handler(event) {
       body: JSON.stringify({ reply })
     };
 
-  } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        error: err.message
-      })
-    };
+  catch (err) {
+  console.error(err);
+
+  return {
+    statusCode: 500,
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      error: err.message,
+      stack: err.stack
+    })
+  };
   }
-}
