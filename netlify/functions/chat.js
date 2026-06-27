@@ -1,4 +1,4 @@
-export async function handler(event) {
+exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -57,4 +57,4 @@ export async function handler(event) {
       stack: err.stack
     })
   };
-  }
+  };
