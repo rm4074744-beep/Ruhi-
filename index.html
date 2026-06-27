@@ -390,20 +390,51 @@
             chatScreen.appendChild(loaderDiv);
             chatScreen.scrollTop = chatScreen.scrollHeight;
 
-            setTimeout(() => {
-                const loader = document.getElementById('drawingLoader');
-                if (loader) loader.remove();
+            setTimeout(async () => {
+    try {
+        const response = await fetch("/.netlify/functions/chat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: document.querySelector(".user-message:last-child").textContent
+            })
+        });
 
-                const aiWrapper = document.createElement('div');
-                aiWrapper.classList.add('message-wrapper', 'ai-wrapper');
-                aiWrapper.innerHTML = `
-                    <div class="message-bubble ai-message">নিশ্চয়ই! আমি কাস্টম টুলস ফিচার এবং ড্রয়িং অ্যানিমেশন দিয়ে আপনার কাজ করার জন্য প্রস্তুত।</div>
-                    <div class="chat-time">${getCurrentTime()}</div>
-                `;
-                chatScreen.appendChild(aiWrapper);
-                chatScreen.scrollTop = chatScreen.scrollHeight;
+        const data = await response.json();
 
-            }, 2500);
+        const loader = document.getElementById("drawingLoader");
+        if (loader) loader.remove();
+
+        const aiWrapper = document.createElement("div");
+        aiWrapper.classList.add("message-wrapper", "ai-wrapper");
+
+        aiWrapper.innerHTML = `
+            <div class="message-bubble ai-message">${data.reply}</div>
+            <div class="chat-time">${getCurrentTime()}</div>
+        `;
+
+        chatScreen.appendChild(aiWrapper);
+        chatScreen.scrollTop = chatScreen.scrollHeight;
+
+    } catch (error) {
+        const loader = document.getElementById("drawingLoader");
+        if (loader) loader.remove();
+
+        const aiWrapper = document.createElement("div");
+        aiWrapper.classList.add("message-wrapper", "ai-wrapper");
+
+        aiWrapper.innerHTML = `
+            <div class="message-bubble ai-message">
+                ❌ AI সার্ভারের সাথে সংযোগ করা যায়নি।
+            </div>
+            <div class="chat-time">${getCurrentTime()}</div>
+        `;
+
+        chatScreen.appendChild(aiWrapper);
+    }
+}, 1000);
         }
 
         sendBtn.addEventListener('click', sendMessage);
