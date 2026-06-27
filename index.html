@@ -401,7 +401,14 @@
                 message: document.querySelector(".user-message:last-child").textContent
             })
         });
+        if (!response.ok) {
+    const errorText = await response.text();
+    alert(errorText);
+    console.log(errorText);
+    return;
+        }
 
+        
         const data = await response.json();
 
         const loader = document.getElementById("drawingLoader");
