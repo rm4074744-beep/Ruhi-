@@ -316,149 +316,146 @@
             </div>
         </div>
     </div>
+<script>
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const chatScreen = document.getElementById('chatScreen');
+    const welcomeContent = document.getElementById('welcomeContent');
+    const toolsBtn = document.getElementById('toolsBtn');
+    const toolsMenu = document.getElementById('toolsMenu');
 
-    <script>
-        const chatInput = document.getElementById('chatInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const chatScreen = document.getElementById('chatScreen');
-        const welcomeContent = document.getElementById('welcomeContent');
-        const toolsBtn = document.getElementById('toolsBtn');
-        const toolsMenu = document.getElementById('toolsMenu');
+    function getCurrentTime() {
+        const now = new Date();
+        let hours = now.getHours();
+        let minutes = now.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        return `${hours}:${minutes} ${ampm}`;
+    }
 
-        function getCurrentTime() {
-            const now = new Date();
-            let hours = now.getHours();
-            let minutes = now.getMinutes();
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12 || 12;
-            minutes = minutes < 10 ? '0' + minutes : minutes;
-            return `${hours}:${minutes} ${ampm}`;
-        }
+    // --- টুলস মেনু ওপেন/ক্লোজ করার ফাংশন ---
+    toolsBtn.addEventListener('click', function(event) {
+        event.stopPropagation(); // ক্লিক যেন বডিতে ছড়িয়ে না পড়ে
+        toolsMenu.classList.toggle('active');
+    });
 
-        // --- টুলস মেনু ওপেন/ক্লোজ করার ফাংশন ---
-        toolsBtn.addEventListener('click', function(event) {
-            event.stopPropagation(); // ক্লিক যেন বডিতে ছড়িয়ে না পড়ে
-            toolsMenu.classList.toggle('active');
-        });
+    // মেনুর বাইরে কোথাও ক্লিক করলে মেনু বন্ধ হয়ে যাবে
+    document.addEventListener('click', function() {
+        toolsMenu.classList.remove('active');
+    });
 
-        // মেনুর বাইরে কোথাও ক্লিক করলে মেনু বন্ধ হয়ে যাবে
-        document.addEventListener('click', function() {
-            toolsMenu.classList.remove('active');
-        });
+    // মেনু থেকে কোনো টুল সিলেক্ট করলে কি হবে
+    function selectTool(toolName) {
+        chatInput.value = `[Using ${toolName}]: `;
+        chatInput.focus();
+        toolsMenu.classList.remove('active');
+    }
 
-        // মেনু থেকে কোনো টুল সিলেক্ট করলে কি হবে
-        function selectTool(toolName) {
-            chatInput.value = `[Using ${toolName}]: `;
-            chatInput.focus();
-            toolsMenu.classList.remove('active');
-        }
+    function sendMessage() {
+        const messageText = chatInput.value.trim();
+        if (messageText !== "") {
+            if (welcomeContent) welcomeContent.style.display = 'none';
 
-        function sendMessage() {
-            const messageText = chatInput.value.trim();
-            if (messageText !== "") {
-                if (welcomeContent) welcomeContent.style.display = 'none';
-
-                const userWrapper = document.createElement('div');
-                userWrapper.classList.add('message-wrapper', 'user-wrapper');
-                userWrapper.innerHTML = `
-                    <div class="message-bubble user-message">${messageText}</div>
-                    <div class="chat-time">${getCurrentTime()}</div>
-                `;
-                chatScreen.appendChild(userWrapper);
-                
-                chatInput.value = ""; 
-                chatScreen.scrollTop = chatScreen.scrollHeight;
-
-                showDrawingLoader();
-            }
-        }
-
-        function showDrawingLoader() {
-            const loaderDiv = document.createElement('div');
-            loaderDiv.classList.add('drawing-loader');
-            loaderDiv.id = 'drawingLoader';
-            
-            loaderDiv.innerHTML = `
-                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path class="svg-bubble-path" d="M44 16C52.8366 16 60 22.7157 60 31C60 39.2843 52.8366 46 44 46C41.5 46 38.5 47.5 35 50C34 50.7 32.5 49.5 33 48.5C34.5 45.5 35 43.5 35 42C26.1634 42 19 35.2843 19 27C19 18.7157 26.1634 16 35 16H44Z" stroke="#00a372" stroke-width="2.5" stroke-linecap="round"/>
-                    <circle class="svg-circle-path" cx="48" cy="16" r="5" stroke="#00a372" stroke-width="2.5"/>
-                    <line class="svg-text-line line-1" x1="28" y1="26" x2="48" y2="26" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
-                    <line class="svg-text-line line-2" x1="28" y1="32" x2="44" y2="32" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
-                    <line class="svg-text-line line-3" x1="28" y1="38" x2="38" y2="38" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
-                </svg>
+            const userWrapper = document.createElement('div');
+            userWrapper.classList.add('message-wrapper', 'user-wrapper');
+            userWrapper.innerHTML = `
+                <div class="message-bubble user-message">${messageText}</div>
+                <div class="chat-time">${getCurrentTime()}</div>
             `;
-            chatScreen.appendChild(loaderDiv);
+            chatScreen.appendChild(userWrapper);
+            
+            chatInput.value = ""; 
             chatScreen.scrollTop = chatScreen.scrollHeight;
 
-            setTimeout(async () => {
-    try {
-        const response = await fetch("/.netlify/functions/chat", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                message: document.querySelector(".user-message:last-child").textContent
-            })
-        });
-        if (!response.ok) {
-    const errorText = await response.text();
-    alert(errorText);
-    console.log(errorText);
-    return;
+            showDrawingLoader();
         }
+    }
 
+    function showDrawingLoader() {
+        const loaderDiv = document.createElement('div');
+        loaderDiv.classList.add('drawing-loader');
+        loaderDiv.id = 'drawingLoader';
         
-        const data = await response.json();
-
-        const loader = document.getElementById("drawingLoader");
-        if (loader) loader.remove();
-
-        const aiWrapper = document.createElement("div");
-        aiWrapper.classList.add("message-wrapper", "ai-wrapper");
-
-        aiWrapper.innerHTML = `
-            <div class="message-bubble ai-message">${data.reply}</div>
-            <div class="chat-time">${getCurrentTime()}</div>
+        loaderDiv.innerHTML = `
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path class="svg-bubble-path" d="M44 16C52.8366 16 60 22.7157 60 31C60 39.2843 52.8366 46 44 46C41.5 46 38.5 47.5 35 50C34 50.7 32.5 49.5 33 48.5C34.5 45.5 35 43.5 35 42C26.1634 42 19 35.2843 19 27C19 18.7157 26.1634 16 35 16H44Z" stroke="#00a372" stroke-width="2.5" stroke-linecap="round"/>
+                <circle class="svg-circle-path" cx="48" cy="16" r="5" stroke="#00a372" stroke-width="2.5"/>
+                <line class="svg-text-line line-1" x1="28" y1="26" x2="48" y2="26" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+                <line class="svg-text-line line-2" x1="28" y1="32" x2="44" y2="32" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+                <line class="svg-text-line line-3" x1="28" y1="38" x2="38" y2="38" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
         `;
-
-        chatScreen.appendChild(aiWrapper);
+        chatScreen.appendChild(loaderDiv);
         chatScreen.scrollTop = chatScreen.scrollHeight;
 
-        catch (error) {
-    console.error(error);
-    alert(error.message);
+        setTimeout(async () => {
+            try {
+                const response = await fetch("/.netlify/functions/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: document.querySelector(".user-message:last-child").textContent
+                    })
+                });
 
-    const loader = document.getElementById("drawingLoader");
-    if (loader) loader.remove();
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    alert(errorText);
+                    console.log(errorText);
+                    return;
+                }
 
-    const aiWrapper = document.createElement("div");
-    aiWrapper.classList.add("message-wrapper", "ai-wrapper");
+                const data = await response.json();
 
-    aiWrapper.innerHTML = `
-        <div class="message-bubble ai-message">
-            ❌ ${error.message}
-        </div>
-        <div class="chat-time">${getCurrentTime()}</div>
-    `;
+                // লোডার রিমুভ করা
+                const loader = document.getElementById("drawingLoader");
+                if (loader) loader.remove();
 
-    chatScreen.appendChild(aiWrapper);
-    }
-     `;
+                // AI মেসেজ রেন্ডার করা
+                const aiWrapper = document.createElement("div");
+                aiWrapper.classList.add("message-wrapper", "ai-wrapper");
+                aiWrapper.innerHTML = `
+                    <div class="message-bubble ai-message">${data.reply}</div>
+                    <div class="chat-time">${getCurrentTime()}</div>
+                `;
 
-        chatScreen.appendChild(aiWrapper);
-    }
-}, 1000);
-        }
+                chatScreen.appendChild(aiWrapper);
+                chatScreen.scrollTop = chatScreen.scrollHeight;
 
-        sendBtn.addEventListener('click', sendMessage);
-        chatInput.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault(); 
-                sendMessage();
+            } catch (error) {
+                console.error(error);
+                
+                // এরর হলে লোডার রিমুভ করা
+                const loader = document.getElementById("drawingLoader");
+                if (loader) loader.remove();
+
+                // স্ক্রিনে এরর মেসেজ দেখানো
+                const aiWrapper = document.createElement("div");
+                aiWrapper.classList.add("message-wrapper", "ai-wrapper");
+                aiWrapper.innerHTML = `
+                    <div class="message-bubble ai-message">
+                        ❌ ${error.message}
+                    </div>
+                    <div class="chat-time">${getCurrentTime()}</div>
+                `;
+
+                chatScreen.appendChild(aiWrapper);
+                chatScreen.scrollTop = chatScreen.scrollHeight;
             }
-        });
-    </script>
+        }, 1000);
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault(); 
+            sendMessage();
+        }
+    });
+</script>
 
 </body>
 </html>
