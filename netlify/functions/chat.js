@@ -44,7 +44,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ reply })
     };
 
-  catch (err) {
+  } catch (err) {
   console.error(err);
 
   return {
